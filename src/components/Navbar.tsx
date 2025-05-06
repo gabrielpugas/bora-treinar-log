@@ -1,10 +1,10 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import LoginModal from "@/components/LoginModal"; // Importando o modal de login
 
 const Navbar = () => {
   const location = useLocation();
-  
+
   return (
     <header className="sticky top-0 z-50 w-full bg-card/70 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto flex h-16 items-center justify-between">
@@ -44,6 +44,9 @@ const Navbar = () => {
           >
             Em Casa
           </Link>
+          
+          {/* Botão de Login - Abre Modal */}
+          <LoginModal />
         </nav>
       </div>
     </header>

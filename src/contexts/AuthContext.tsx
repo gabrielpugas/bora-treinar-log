@@ -42,28 +42,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     fetchSession();
+
+    // Monitorar mudanças na sessão do usuário
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email,
+          role: session.user.user_metadata?.role || "user",
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => {
+      listener.subscription.unsubscribe(); // Remover listener ao desmontar
+    };
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      console.error("Erro ao logar:", error.message);
-      return;
-    }
-
-    const sessionUser = data.user;
-    if (sessionUser) {
+  const login = async (email: string, password: string): Promise<void> => {
+    try {
+      if (!email.trim() || !password.trim()) {
+        console.error("Erro: Campos de email e senha não podem estar vazios.");
+        return;
+      }
+  
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  
+      if (error || !data.session) {
+        console.error("Erro ao logar:", error?.message || "Credenciais inválidas");
+        return;
+      }
+  
+      const sessionUser = data.session.user; 
+  
       setUser({
         id: sessionUser.id,
         email: sessionUser.email,
         role: sessionUser.user_metadata?.role || "user",
       });
+
+      console.log("Login realizado com sucesso!");
+    } catch (err) {
+      console.error("Erro inesperado:", err);
     }
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      console.log("Logout realizado com sucesso!");
+    } catch (err) {
+      console.error("Erro ao tentar logout:", err);
+    }
   };
 
   return (

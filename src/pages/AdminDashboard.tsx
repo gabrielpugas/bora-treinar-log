@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/utils/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -38,31 +38,46 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
+        console.log("Verificando sessão do usuário...");
+        
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        const session = sessionData?.session;
+        
         if (sessionError || !session) {
-          console.error("Erro ao obter sessão:", sessionError);
+          console.error("Erro ao obter sessão:", sessionError?.message || "Nenhuma sessão ativa.");
           setIsAdmin(false);
+          setLoading(false);
           return;
         }
-
-        const userId = session?.user?.id;
-
-        // Verificar se o usuário é admin pelo Supabase
+    
+        const userId = session.user?.id;
+        
+        if (!userId) {
+          console.error("Erro: ID do usuário não encontrado.");
+          setIsAdmin(false);
+          setLoading(false);
+          return;
+        }
+    
+        console.log(`Usuário autenticado: ${userId}`);
+    
+        // Verificar se o usuário é admin no Supabase
         const { data, error } = await supabase
           .from("profiles")
-          .select("is_admin")
+          .select("id, is_admin")
           .eq("id", userId)
           .single();
-
-        if (error || !data?.is_admin) {
-          console.error("Erro ao verificar status de admin:", error);
+    
+        if (error) {
+          console.error("Erro ao buscar usuário na tabela profiles:", error.message);
           setIsAdmin(false);
         } else {
-          setIsAdmin(true);
+          console.log("Dados do usuário no banco:", data);
+          setIsAdmin(data?.is_admin ?? false);
         }
       } catch (error) {
-        console.error("Erro ao verificar status de admin:", error);
+        console.error("Erro inesperado ao verificar status de admin:", error);
+        setIsAdmin(false);
       } finally {
         setLoading(false);
       }

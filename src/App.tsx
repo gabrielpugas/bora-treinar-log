@@ -32,7 +32,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <LoginModal /> {/* Adicionando o modal de login para usuários não autenticados */}
           <Routes>
             <Route path="/" element={<Layout><Index /></Layout>} />
             <Route path="/gym" element={<Layout><GymWorkouts /></Layout>} />
