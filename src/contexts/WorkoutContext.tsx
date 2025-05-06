@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -71,29 +70,24 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [gruposMusculares, setGruposMusculares] = useState<GrupoMuscular[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load logs from localStorage on mount
   useEffect(() => {
     const savedLogs = localStorage.getItem("workout-logs");
     if (savedLogs) {
       setLogs(JSON.parse(savedLogs));
     }
     
-    // Carregar dados do Supabase
     fetchTreinosFromSupabase();
     fetchGruposMusculares();
   }, []);
 
-  // Save logs to localStorage when they change
   useEffect(() => {
     localStorage.setItem("workout-logs", JSON.stringify(logs));
   }, [logs]);
 
-  // Fetch treinos from Supabase
   const fetchTreinosFromSupabase = async () => {
     try {
       setIsLoading(true);
       
-      // Buscar todos os treinos
       const { data: treinosData, error: treinosError } = await supabase
         .from("treinos")
         .select("*")
@@ -109,53 +103,50 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
-      // Organizar treinos por categoria
       const categoriesMap: Record<string, WorkoutCategory> = {};
       
       for (const treino of treinosData) {
-        // Garantir que a categoria existe
         if (!categoriesMap[treino.categoria]) {
           categoriesMap[treino.categoria] = {
             id: treino.categoria,
             name: treino.categoria === "gym" ? "Academia" : "Em Casa",
-            weeks: []
+            weeks: [],
           };
         }
         
-        // Encontrar ou criar semana
         let week = categoriesMap[treino.categoria].weeks.find(w => w.id === treino.semana);
         if (!week) {
           week = {
             id: treino.semana,
-            name: treino.semana.startsWith("week") 
-              ? `Semana ${treino.semana.replace("week", "")}` 
-              : treino.semana,
-            days: []
+            name: treino.semana.startsWith("week") ? `Semana ${treino.semana.replace("week", "")}` : treino.semana,
+            days: [],
           };
           categoriesMap[treino.categoria].weeks.push(week);
         }
         
-        // Adicionar dia com exercícios
         const day: WorkoutDay = {
           id: treino.dia,
           name: treino.nome,
-          exercises: treino.exercicios as Exercise[]
+          exercises: treino.exercicios.map((exercicio: any) => ({
+            id: exercicio.nome,
+            name: exercicio.nome,
+            sets: parseInt(exercicio.repeticoes.split("x")[0]) || 1,
+            reps: exercicio.repeticoes.split("x")[1] || "Máximo",
+            notes: exercicio.observacoes ?? "",
+            image: exercicio.imagem ?? "",
+          })) as Exercise[],
         };
         
         week.days.push(day);
       }
       
-      // Converter o map para um array
       const categoriesArray = Object.values(categoriesMap);
       setCategories(categoriesArray);
       
-      // Definir valores padrão para seleção
       if (categoriesArray.length > 0) {
         setSelectedCategory(categoriesArray[0].id);
-        
         if (categoriesArray[0].weeks.length > 0) {
           setSelectedWeek(categoriesArray[0].weeks[0].id);
-          
           if (categoriesArray[0].weeks[0].days.length > 0) {
             setSelectedDay(categoriesArray[0].weeks[0].days[0].id);
           }
@@ -169,7 +160,6 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  // Fetch grupos musculares from Supabase
   const fetchGruposMusculares = async () => {
     try {
       const { data, error } = await supabase
@@ -184,7 +174,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       
       setGruposMusculares(data.map(grupo => ({
         id: grupo.id,
-        nome: grupo.nome
+        nome: grupo.nome,
       })));
     } catch (error) {
       console.error("Erro ao processar grupos musculares:", error);
