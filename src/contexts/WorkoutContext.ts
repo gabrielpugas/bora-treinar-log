@@ -1,3 +1,4 @@
 import { createContext } from "react";
-import { WorkoutContextType, WorkoutCategory, WorkoutLog, GrupoMuscular } from "./WorkoutTypes";
+import { WorkoutContextType } from "./WorkoutTypes"; // Certifique-se de que esse arquivo existe!
+
 export const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);

@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import { Exercise, useWorkout, WorkoutLog } from "@/contexts/WorkoutContext";
+import { Exercise,  } from "@/contexts/WorkoutTypes";
+import { useWorkout } from "@/contexts/useWorkout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

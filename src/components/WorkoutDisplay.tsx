@@ -1,5 +1,5 @@
 
-import { useWorkout } from "@/contexts/WorkoutContext";
+import { useWorkout } from "@/contexts/useWorkout";
 import ExerciseCard from "./ExerciseCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 

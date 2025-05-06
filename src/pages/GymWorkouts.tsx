@@ -1,9 +1,9 @@
 
-import { WorkoutProvider } from "@/contexts/WorkoutContext";
+import { WorkoutProvider } from "@/contexts/WorkoutProvider";
 import WorkoutSelector from "@/components/WorkoutSelector";
 import WorkoutDisplay from "@/components/WorkoutDisplay";
 import { Loader2 } from "lucide-react";
-import { useWorkout } from "@/contexts/WorkoutContext";
+import { useWorkout } from "@/contexts/useWorkout";
 
 // Componente interno que usa o hook useWorkout
 const GymWorkoutsContent = () => {

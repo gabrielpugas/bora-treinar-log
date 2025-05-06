@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useWorkout } from "@/contexts/WorkoutContext";
+import { useWorkout } from "@/contexts/useWorkout";
 import {
   Select,
   SelectContent,
