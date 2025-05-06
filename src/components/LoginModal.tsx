@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import * as Dialog from "@radix-ui/react-dialog";
 
 const LoginModal = () => {

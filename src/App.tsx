@@ -3,8 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext"; // Autenticação
-import LoginModal from "@/components/LoginModal"; // Importando o Modal de Login
+import { AuthProvider } from "@/contexts/AuthContext"; // Autenticação
+import { useAuth } from "@/contexts/useAuth";
 import Index from "./pages/Index";
 import GymWorkouts from "./pages/GymWorkouts";
 import HomeWorkouts from "./pages/HomeWorkouts"; 
