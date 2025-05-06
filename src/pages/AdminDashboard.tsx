@@ -1,57 +1,76 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
+import { Navigate } from "react-router-dom";
+
+// Definição das interfaces para evitar "any"
+interface Exercise {
+  id: string;
+  name: string;
+  sets: number;
+  reps: string;
+  notes?: string;
+  image?: string;
+}
+
+interface Treino {
+  id: string;
+  nome: string;
+  categoria: string;
+  semana: string;
+  dia: string;
+  exercicios: Exercise[];
+}
+
+interface GrupoMuscular {
+  id: string;
+  nome: string;
+}
 
 const AdminDashboard = () => {
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     const checkAdminStatus = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError || !session) {
+          console.error("Erro ao obter sessão:", sessionError);
           setIsAdmin(false);
-          setLoading(false);
           return;
         }
-        
-        // Verificar se o usuário é admin
+
+        const userId = session?.user?.id;
+
+        // Verificar se o usuário é admin pelo Supabase
         const { data, error } = await supabase
           .from("profiles")
           .select("is_admin")
-          .eq("id", session.user.id)
+          .eq("id", userId)
           .single();
-        
-        if (error || !data) {
+
+        if (error || !data?.is_admin) {
           console.error("Erro ao verificar status de admin:", error);
           setIsAdmin(false);
         } else {
-          setIsAdmin(data.is_admin);
+          setIsAdmin(true);
         }
       } catch (error) {
         console.error("Erro ao verificar status de admin:", error);
-        setIsAdmin(false);
       } finally {
         setLoading(false);
       }
     };
-    
+
     checkAdminStatus();
   }, []);
-  
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -59,32 +78,25 @@ const AdminDashboard = () => {
       </div>
     );
   }
-  
+
   if (!isAdmin) {
-    return (
-      <div className="max-w-3xl mx-auto text-center py-12">
-        <h1 className="text-3xl font-bold mb-6">Acesso Restrito</h1>
-        <p className="text-muted-foreground">
-          Você não tem permissão para acessar esta página.
-        </p>
-      </div>
-    );
+    return <Navigate to="/" />;
   }
-  
+
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Painel do Administrador</h1>
-      
+
       <Tabs defaultValue="treinos">
         <TabsList className="mb-6">
           <TabsTrigger value="treinos">Treinos</TabsTrigger>
           <TabsTrigger value="grupos">Grupos Musculares</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="treinos">
           <TreinosTab />
         </TabsContent>
-        
+
         <TabsContent value="grupos">
           <GruposTab />
         </TabsContent>
@@ -94,9 +106,9 @@ const AdminDashboard = () => {
 };
 
 const TreinosTab = () => {
-  const [treinos, setTreinos] = useState<any[]>([]);
+  const [treinos, setTreinos] = useState<Treino[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     const fetchTreinos = async () => {
       try {
@@ -105,12 +117,29 @@ const TreinosTab = () => {
           .from("treinos")
           .select("*")
           .order("created_at", { ascending: false });
-        
-        if (error) {
-          throw error;
-        }
-        
-        setTreinos(data || []);
+
+        if (error) throw error;
+
+        // Convertendo "exercicios" corretamente para um array de Exercise[]
+        const treinosFormatados: Treino[] = data.map((treino) => ({
+          id: treino.id,
+          nome: treino.nome,
+          categoria: treino.categoria,
+          semana: treino.semana,
+          dia: treino.dia,
+          exercicios: Array.isArray(treino.exercicios)
+            ? (treino.exercicios as unknown as { nome: string; repeticoes: string; observacoes?: string; imagem?: string }[]).map((exercicio) => ({
+                id: exercicio.nome, // Usando nome como ID caso não tenha um explícito
+                name: exercicio.nome,
+                sets: exercicio.repeticoes ? parseInt(exercicio.repeticoes.split("x")[0]) || 1 : 1,
+                reps: exercicio.repeticoes ? exercicio.repeticoes.split("x")[1] || "Máximo" : "Máximo",
+                notes: exercicio.observacoes ?? "",
+                image: exercicio.imagem ?? "",
+              }))
+            : [], // Caso "exercicios" não seja um array, retorna um array vazio
+        }));
+
+        setTreinos(treinosFormatados);
       } catch (error) {
         console.error("Erro ao buscar treinos:", error);
         toast.error("Erro ao carregar treinos");
@@ -118,10 +147,10 @@ const TreinosTab = () => {
         setLoading(false);
       }
     };
-    
+
     fetchTreinos();
   }, []);
-  
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -130,7 +159,7 @@ const TreinosTab = () => {
           <Plus className="h-4 w-4 mr-2" /> Novo Treino
         </Button>
       </div>
-      
+
       {loading ? (
         <div className="flex justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -166,11 +195,9 @@ const TreinosTab = () => {
 };
 
 const GruposTab = () => {
-  const [grupos, setGrupos] = useState<any[]>([]);
-  const [novoGrupo, setNovoGrupo] = useState("");
+  const [grupos, setGrupos] = useState<GrupoMuscular[]>([]);
   const [loading, setLoading] = useState(true);
-  const [salvando, setSalvando] = useState(false);
-  
+
   useEffect(() => {
     const fetchGrupos = async () => {
       try {
@@ -179,11 +206,9 @@ const GruposTab = () => {
           .from("grupos_musculares")
           .select("*")
           .order("nome");
-        
-        if (error) {
-          throw error;
-        }
-        
+
+        if (error) throw error;
+
         setGrupos(data || []);
       } catch (error) {
         console.error("Erro ao buscar grupos musculares:", error);
@@ -192,67 +217,14 @@ const GruposTab = () => {
         setLoading(false);
       }
     };
-    
+
     fetchGrupos();
   }, []);
-  
-  const adicionarGrupo = async () => {
-    if (!novoGrupo.trim()) {
-      toast.error("Digite o nome do grupo muscular");
-      return;
-    }
-    
-    try {
-      setSalvando(true);
-      const { data, error } = await supabase
-        .from("grupos_musculares")
-        .insert([{ nome: novoGrupo.trim() }])
-        .select()
-        .single();
-      
-      if (error) {
-        throw error;
-      }
-      
-      setGrupos([...grupos, data]);
-      setNovoGrupo("");
-      toast.success("Grupo muscular adicionado");
-    } catch (error: any) {
-      console.error("Erro ao adicionar grupo muscular:", error);
-      
-      if (error.code === "23505") { // Código para violação de unique constraint
-        toast.error("Este grupo muscular já existe");
-      } else {
-        toast.error("Erro ao adicionar grupo muscular");
-      }
-    } finally {
-      setSalvando(false);
-    }
-  };
-  
+
   return (
     <div>
       <h2 className="text-xl font-semibold mb-6">Gerenciar Grupos Musculares</h2>
-      
-      <div className="flex gap-2 mb-6">
-        <input
-          type="text"
-          value={novoGrupo}
-          onChange={(e) => setNovoGrupo(e.target.value)}
-          placeholder="Nome do grupo muscular"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-          disabled={salvando}
-        />
-        <Button onClick={adicionarGrupo} disabled={salvando}>
-          {salvando ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Plus className="h-4 w-4 mr-2" />
-          )}
-          Adicionar
-        </Button>
-      </div>
-      
+
       {loading ? (
         <div className="flex justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
