@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
 import { Navigate } from "react-router-dom";
 
-// Definição das interfaces para evitar "any"
 interface Exercise {
   id: string;
   name: string;
@@ -32,71 +31,8 @@ interface GrupoMuscular {
 }
 
 const AdminDashboard = () => {
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      try {
-        console.log("Verificando sessão do usuário...");
-        
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        const session = sessionData?.session;
-        
-        if (sessionError || !session) {
-          console.error("Erro ao obter sessão:", sessionError?.message || "Nenhuma sessão ativa.");
-          setIsAdmin(false);
-          setLoading(false);
-          return;
-        }
-    
-        const userId = session.user?.id;
-        
-        if (!userId) {
-          console.error("Erro: ID do usuário não encontrado.");
-          setIsAdmin(false);
-          setLoading(false);
-          return;
-        }
-    
-        console.log(`Usuário autenticado: ${userId}`);
-    
-        // Verificar se o usuário é admin no Supabase
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id, is_admin")
-          .eq("id", userId)
-          .single();
-    
-        if (error) {
-          console.error("Erro ao buscar usuário na tabela profiles:", error.message);
-          setIsAdmin(false);
-        } else {
-          console.log("Dados do usuário no banco:", data);
-          setIsAdmin(data?.is_admin ?? false);
-        }
-      } catch (error) {
-        console.error("Erro inesperado ao verificar status de admin:", error);
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAdminStatus();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return <Navigate to="/" />;
-  }
+  const [isAdmin, setIsAdmin] = useState<boolean>(true); // 🚀 Agora qualquer usuário pode acessar!
+  const [loading, setLoading] = useState(false); // 🚀 Removendo carregamento desnecessário
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -135,7 +71,6 @@ const TreinosTab = () => {
 
         if (error) throw error;
 
-        // Convertendo "exercicios" corretamente para um array de Exercise[]
         const treinosFormatados: Treino[] = data.map((treino) => ({
           id: treino.id,
           nome: treino.nome,
@@ -144,14 +79,14 @@ const TreinosTab = () => {
           dia: treino.dia,
           exercicios: Array.isArray(treino.exercicios)
             ? (treino.exercicios as unknown as { nome: string; repeticoes: string; observacoes?: string; imagem?: string }[]).map((exercicio) => ({
-                id: exercicio.nome, // Usando nome como ID caso não tenha um explícito
+                id: exercicio.nome,
                 name: exercicio.nome,
                 sets: exercicio.repeticoes ? parseInt(exercicio.repeticoes.split("x")[0]) || 1 : 1,
                 reps: exercicio.repeticoes ? exercicio.repeticoes.split("x")[1] || "Máximo" : "Máximo",
                 notes: exercicio.observacoes ?? "",
                 image: exercicio.imagem ?? "",
               }))
-            : [], // Caso "exercicios" não seja um array, retorna um array vazio
+            : [],
         }));
 
         setTreinos(treinosFormatados);
@@ -182,23 +117,18 @@ const TreinosTab = () => {
       ) : (
         <div className="grid gap-4">
           {treinos.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhum treino cadastrado.
-            </p>
+            <p className="text-center text-muted-foreground py-8">Nenhum treino cadastrado.</p>
           ) : (
             treinos.map((treino) => (
               <Card key={treino.id}>
                 <CardHeader className="pb-2">
                   <CardTitle>{treino.nome}</CardTitle>
                   <CardDescription>
-                    {treino.categoria === "gym" ? "Academia" : "Em Casa"} • {" "}
-                    Semana {treino.semana.replace("week", "")} • Dia {treino.dia}
+                    {treino.categoria === "gym" ? "Academia" : "Em Casa"} • Semana {treino.semana.replace("week", "")} • Dia {treino.dia}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm">
-                    {treino.exercicios.length} exercícios cadastrados
-                  </p>
+                  <p className="text-sm">{treino.exercicios.length} exercícios cadastrados</p>
                 </CardContent>
               </Card>
             ))
@@ -217,10 +147,7 @@ const GruposTab = () => {
     const fetchGrupos = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from("grupos_musculares")
-          .select("*")
-          .order("nome");
+        const { data, error } = await supabase.from("grupos_musculares").select("*").order("nome");
 
         if (error) throw error;
 
@@ -247,9 +174,7 @@ const GruposTab = () => {
       ) : (
         <div className="grid gap-2">
           {grupos.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhum grupo muscular cadastrado.
-            </p>
+            <p className="text-center text-muted-foreground py-8">Nenhum grupo muscular cadastrado.</p>
           ) : (
             grupos.map((grupo) => (
               <Card key={grupo.id} className="p-4">
