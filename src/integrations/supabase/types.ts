@@ -9,13 +9,117 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      grupos_musculares: {
+        Row: {
+          id: string
+          nome: string
+        }
+        Insert: {
+          id?: string
+          nome: string
+        }
+        Update: {
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_admin: boolean | null
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          is_admin?: boolean | null
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_admin?: boolean | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      treino_grupo_muscular: {
+        Row: {
+          grupo_muscular_id: string
+          id: string
+          treino_id: string
+        }
+        Insert: {
+          grupo_muscular_id: string
+          id?: string
+          treino_id: string
+        }
+        Update: {
+          grupo_muscular_id?: string
+          id?: string
+          treino_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treino_grupo_muscular_grupo_muscular_id_fkey"
+            columns: ["grupo_muscular_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_musculares"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treino_grupo_muscular_treino_id_fkey"
+            columns: ["treino_id"]
+            isOneToOne: false
+            referencedRelation: "treinos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treinos: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          created_by: string | null
+          dia: string
+          exercicios: Json
+          id: string
+          nome: string
+          semana: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string | null
+          created_by?: string | null
+          dia: string
+          exercicios: Json
+          id?: string
+          nome: string
+          semana: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          created_by?: string | null
+          dia?: string
+          exercicios?: Json
+          id?: string
+          nome?: string
+          semana?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

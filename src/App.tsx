@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import GymWorkouts from "./pages/GymWorkouts";
 import HomeWorkouts from "./pages/HomeWorkouts"; 
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Layout><Index /></Layout>} />
           <Route path="/gym" element={<Layout><GymWorkouts /></Layout>} />
           <Route path="/home" element={<Layout><HomeWorkouts /></Layout>} />
+          <Route path="/admin" element={<Layout><AdminDashboard /></Layout>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
